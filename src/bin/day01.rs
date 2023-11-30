@@ -1,4 +1,7 @@
-use std::{env, fs};
+use std::{
+    env,
+    fs::{self, File},
+};
 
 fn main() {
     let day = 1;
@@ -15,4 +18,8 @@ fn main() {
     ))
     .unwrap();
     println!("{}", contents);
+
+    for line in contents.lines() {
+        let parts = line.split(" ");
+    }
 }
