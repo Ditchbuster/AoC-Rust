@@ -30,7 +30,7 @@ fn main() {
     }
     println!("Part A:{}", total);
     let mut total = 0;
-    for (i, line) in contents.lines().enumerate() {
+    for (_i, line) in contents.lines().enumerate() {
         total += partb(line);
     }
     println!("Part B:{}", total);
