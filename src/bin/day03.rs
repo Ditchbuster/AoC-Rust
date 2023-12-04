@@ -1,6 +1,6 @@
+use std::collections::HashSet;
 #[allow(unused_imports)]
 use std::{cmp::max, collections::HashMap, env, fs};
-use std::{collections::HashSet, ops::Sub};
 
 fn main() {
     let day = 3;
@@ -18,6 +18,7 @@ fn main() {
 
     let mut parts: Vec<Part> = Vec::new();
     let mut symb: Vec<(usize, usize)> = Vec::new();
+    let mut gears: HashMap<(usize, usize), Vec<i32>> = HashMap::new();
     for (i, line) in contents.lines().enumerate() {
         /* for (x, c) in line.chars().enumerate() {
             if c.is_numeric() {
@@ -52,25 +53,36 @@ fn main() {
                 }
             }
         }
-
         for (x, c) in line.chars().enumerate() {
             if !c.is_digit(10) && c != '.' {
                 symb.push((x, i));
+                if c == '*' {
+                    gears.insert((x, i), Vec::<i32>::new());
+                }
             }
         }
     }
     let mut total: i32 = 0;
     for part in parts {
         if check_part(&part, &symb) {
-            print!("{}:", part.number);
+            /* print!("{}:", part.number);
             if part.number == 354 {
                 print!("({},{})", part.x, part.y);
-            }
+            } */
             total += part.number;
         }
+        check_gear(&part, &mut gears);
     }
+
     //dbg!(symb);
     println!("Part A:{}", total);
+    total = 0;
+    for g in gears.values() {
+        if g.len() == 2 {
+            total += g[0] * g[1];
+        }
+    }
+    println!("Part B:{}", total);
 }
 fn check_part(part: &Part, symb: &Vec<(usize, usize)>) -> bool {
     let minx = if part.x == 0 { 0 } else { part.x - 1 }; //handle neg for usize
@@ -78,17 +90,28 @@ fn check_part(part: &Part, symb: &Vec<(usize, usize)>) -> bool {
     for i in minx..(part.x + part.length + 1) {
         for j in miny..(part.y + 2) {
             if symb.contains(&(i, j)) {
-                if part.number == 354 {
+                /* if part.number == 354 {
                     dbg!((minx, part.x + part.length + 1, miny, part.y + 1));
-                }
+                } */
                 return true;
             }
         }
     }
-    if part.number == 354 {
+    /* if part.number == 354 {
         dbg!("false", (minx, part.x + part.length + 1, miny, part.y + 1));
-    }
+    } */
     false
+}
+fn check_gear(part: &Part, gears: &mut HashMap<(usize, usize), Vec<i32>>) {
+    let minx = if part.x == 0 { 0 } else { part.x - 1 }; //handle neg for usize
+    let miny = if part.y == 0 { 0 } else { part.y - 1 };
+    for i in minx..(part.x + part.length + 1) {
+        for j in miny..(part.y + 2) {
+            if gears.contains_key(&(i, j)) {
+                gears.get_mut(&(i, j)).unwrap().push(part.number);
+            }
+        }
+    }
 }
 #[derive(Debug)]
 struct Part {
