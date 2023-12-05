@@ -5,7 +5,7 @@ use std::{
     env,
     fs::{self},
 };
-use std::{str::Lines, usize};
+use std::{collections::hash_map::RandomState, ops::Range, str::Lines, usize};
 
 fn main() {
     let day = 5;
@@ -59,22 +59,36 @@ fn main() {
     }
 
     println!("Part A:{}", seed_loc.iter().min().unwrap());
-    let mut min_loc = usize::MAX;
-    let mut locs: Vec<usize> = Vec::new();
+    let mut ranges: &mut Vec<Range<usize>> = &mut Vec::new();
     for seed in seeds.chunks(2) {
-        for x in 0..seed[1] {
-            let source = seed[0] + x;
-            if !locs.contains(&source) {
-                locs.push(source);
-                min_loc = min_loc.min(hum_to_location.convert(&temp_to_hum.convert(
-                    &light_to_temp.convert(&water_to_light.convert(&fertilizer_to_water.convert(
-                        &soil_to_fertilizer.convert(&seed_to_soil.convert(&(seed[0] + x))),
-                    ))),
-                )));
+        ranges.push(seed[0]..seed[0] + seed[1]);
+    }
+    let my_mappings = vec![
+        seed_to_soil,
+        soil_to_fertilizer,
+        fertilizer_to_water,
+        water_to_light,
+        light_to_temp,
+        temp_to_hum,
+        hum_to_location,
+    ];
+
+    for map in my_mappings {
+        let dest: &mut Vec<Range<usize>> = &mut Vec::new();
+        while let Some(range) = &ranges.pop() {
+            let conv = map.convert_range(range.clone());
+            dest.push(conv.0);
+            if let Some(r) = conv.1 {
+                ranges.push(r);
             }
         }
+        *ranges = dest.clone();
     }
-    println!("Part B:{}", min_loc);
+    //dbg!(ranges);
+    println!(
+        "Part B:{}",
+        ranges.iter().map(|s| { s.start }).min().unwrap()
+    );
 }
 fn parse_map(lines: &mut Lines) -> Mapping {
     println!("Mapping: {}", lines.next().unwrap());
@@ -103,11 +117,41 @@ struct Mapping {
 impl Mapping {
     fn convert(&self, source: &usize) -> usize {
         for m in &self.maps {
-            if source >= &m.source_start && source <= &(m.source_start + m.length) {
+            if source >= &m.source_start && source < &(m.source_start + m.length) {
                 return m.dest_start + (source - m.source_start);
             }
         }
         *source
+    }
+    fn convert_range(&self, range: Range<usize>) -> (Range<usize>, Option<Range<usize>>) {
+        for m in &self.maps {
+            if range.start >= m.source_start && range.start < (m.source_start + m.length) {
+                if range.end <= (m.source_start + m.length) {
+                    //dbg!(&range, &m);
+                    return (
+                        m.dest_start + (range.start - m.source_start)
+                            ..m.dest_start + (range.end - m.source_start),
+                        None,
+                    );
+                }
+                return (
+                    m.dest_start + (range.start - m.source_start)..m.dest_start + m.length,
+                    Some(m.source_start + m.length..range.end),
+                );
+            }
+        }
+        // the starting range was not inside any mapping
+        let mut maps_in_range: Vec<&Map> = Vec::new();
+        for m in &self.maps {
+            if m.source_start > range.start && m.source_start < range.end {
+                maps_in_range.push(m)
+            }
+        }
+        if maps_in_range.len() != 0 {
+            let maps_min = maps_in_range.iter().map(|m| m.source_start).min().unwrap();
+            return (range.start..maps_min, Some(maps_min..range.end));
+        }
+        (range, None)
     }
 }
 
