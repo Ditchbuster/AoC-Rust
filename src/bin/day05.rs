@@ -5,7 +5,7 @@ use std::{
     env,
     fs::{self},
 };
-use std::{collections::hash_map::RandomState, ops::Range, str::Lines, usize};
+use std::{ops::Range, str::Lines, usize};
 
 fn main() {
     let day = 5;
