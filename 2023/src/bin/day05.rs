@@ -1,3 +1,5 @@
+mod DAY07;
+
 #[allow(unused_imports)]
 use std::{
     cmp::min,
@@ -59,7 +61,7 @@ fn main() {
     }
 
     println!("Part A:{}", seed_loc.iter().min().unwrap());
-    let mut ranges: &mut Vec<Range<usize>> = &mut Vec::new();
+    let ranges: &mut Vec<Range<usize>> = &mut Vec::new();
     for seed in seeds.chunks(2) {
         ranges.push(seed[0]..seed[0] + seed[1]);
     }
